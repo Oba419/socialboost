@@ -1,4 +1,4 @@
-﻿# SocialBoost AI
+# SocialBoost AI
 
 An AI-powered social media growth and management platform: plan, create, schedule, publish (where official APIs allow), analyse and improve your social presence from one workspace.
 
@@ -107,7 +107,7 @@ All variables are documented in [.env.example](.env.example). Summary:
 | --- | --- | --- |
 | Supabase | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | Public site works; auth and dashboard show a setup notice |
 | Security | `TOKEN_ENCRYPTION_KEY` (64 hex chars), `OAUTH_STATE_SECRET`, `CRON_SECRET` | Social connections, payments' card renewals and cron jobs are disabled |
-| OpenAI | `OPENAI_API_KEY`, optional `OPENAI_MODEL_DEFAULT`, `OPENAI_MODEL_ADVANCED` | AI tools show "AI generation is awaiting setup"; requests are rejected rather than simulated |
+| AI provider | `GEMINI_API_KEY` (free tier) **or** `OPENAI_API_KEY`; optional `AI_PROVIDER`, `*_MODEL_DEFAULT` / `*_MODEL_ADVANCED` | AI tools show "AI generation is awaiting setup"; requests are rejected rather than simulated |
 | Paystack | `NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY`, `PAYSTACK_SECRET_KEY` | Plans are visible but checkout is disabled |
 | Email | `RESEND_API_KEY`, `EMAIL_FROM`, `CONTACT_INBOX_EMAIL` | In-app notifications only |
 | Social platforms | see below | Platform cards show "Awaiting setup" |

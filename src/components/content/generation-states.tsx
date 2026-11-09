@@ -40,11 +40,11 @@ export function GenerationEmpty({ title, description }: { title: string; descrip
   return <EmptyState icon={Sparkles} title={title} description={description} className="bg-card/50 py-16" />;
 }
 
-/** Rendered (server-side decision) when OPENAI_API_KEY is missing. */
+/** Rendered (server-side decision) when no AI provider key is configured. */
 export function AIUnavailable() {
   return (
-    <SetupRequired integration="AI generation (OpenAI)" envVars={["OPENAI_API_KEY"]}>
-      <p className="mt-1">Until it is configured, generation requests are rejected rather than simulated.</p>
+    <SetupRequired integration="AI generation" envVars={["OPENAI_API_KEY or GEMINI_API_KEY"]}>
+      <p className="mt-1">Until one is configured, generation requests are rejected rather than simulated.</p>
     </SetupRequired>
   );
 }

@@ -349,7 +349,7 @@ export function OnboardingWizard({ initialStep, initialValues, aiReady, plan }: 
             {step === 7 && (
               <div className="space-y-4">
                 {!aiReady ? (
-                  <SetupRequired integration="AI growth assessment (OpenAI)" envVars={["OPENAI_API_KEY"]}>
+                  <SetupRequired integration="AI growth assessment" envVars={["OPENAI_API_KEY or GEMINI_API_KEY"]}>
                     <p className="mt-1">You can finish onboarding now and generate your assessment later from the AI Growth Coach.</p>
                   </SetupRequired>
                 ) : assessing ? (

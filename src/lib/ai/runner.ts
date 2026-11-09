@@ -1,9 +1,9 @@
 import "server-only";
-import { zodTextFormat } from "openai/helpers/zod";
+import { zodResponseFormat } from "openai/helpers/zod";
 import type { z } from "zod";
 import { AI_SERVICES } from "@/config/ai";
 import { AppError, isAppError } from "@/lib/errors";
-import { ConfigurationError, isOpenAIConfigured, isServiceRoleConfigured, serverEnv } from "@/lib/env";
+import { ConfigurationError, isAIConfigured, isServiceRoleConfigured, serverEnv } from "@/lib/env";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { assertFeature, getEntitlements } from "@/lib/entitlements";
@@ -12,7 +12,7 @@ import { logger } from "@/lib/logger";
 import type { AuthContext } from "@/lib/auth/session";
 import type { FeatureKey } from "@/config/plans";
 import type { Json } from "@/types/database";
-import { getOpenAI, modelFor } from "./client";
+import { getAIClient, modelFor, requireProvider } from "./client";
 import { buildBrandContext } from "./context";
 import type { AIServiceDefinition } from "./types";
 import { notify } from "@/services/notifications";
@@ -52,8 +52,8 @@ export async function runAIService<I extends z.ZodType, O extends z.ZodType>(
   await assertFeature(ctx, options.feature ?? config.feature);
   await rateLimit("ai", ctx.userId);
 
-  if (!isOpenAIConfigured()) {
-    throw new ConfigurationError("OpenAI", "AI generation is not configured yet. Add OPENAI_API_KEY to enable it.");
+  if (!isAIConfigured()) {
+    throw new ConfigurationError("AI generation", "AI generation is not configured yet. Add OPENAI_API_KEY or GEMINI_API_KEY.");
   }
   if (!isServiceRoleConfigured()) {
     throw new ConfigurationError(
@@ -97,32 +97,42 @@ export async function runAIService<I extends z.ZodType, O extends z.ZodType>(
     );
   }
 
-  const model = modelFor(config.tier);
+  const provider = requireProvider();
+  const model = modelFor(config.tier, provider);
   const started = Date.now();
   let inputTokens: number | null = null;
   let outputTokens: number | null = null;
 
   try {
     const brand = await buildBrandContext(ctx, { withPerformance: options.withPerformance });
-    const response = await getOpenAI().responses.parse({
+    const maxTokens = def.maxOutputTokens ?? serverEnv().OPENAI_MAX_OUTPUT_TOKENS;
+    const completion = await getAIClient(provider).chat.completions.create({
       model,
-      instructions: def.systemPrompt,
-      input: def.buildUserPrompt(input, brand),
-      text: { format: zodTextFormat(def.outputSchema, `${def.id}_output`) },
-      max_output_tokens: def.maxOutputTokens ?? serverEnv().OPENAI_MAX_OUTPUT_TOKENS,
-      // Do not let OpenAI store prompts for training/debugging beyond the request.
-      store: false,
+      messages: [
+        { role: "system", content: def.systemPrompt },
+        { role: "user", content: def.buildUserPrompt(input, brand) },
+      ],
+      // Strict JSON-schema structured output (supported by OpenAI and Gemini's OpenAI endpoint).
+      response_format: zodResponseFormat(def.outputSchema, `${def.id}_output`),
+      // OpenAI reasoning models require max_completion_tokens; Gemini's compat layer uses max_tokens.
+      ...(provider === "openai"
+        ? { max_completion_tokens: maxTokens, store: false }
+        : { max_tokens: maxTokens }),
     });
 
-    inputTokens = response.usage?.input_tokens ?? null;
-    outputTokens = response.usage?.output_tokens ?? null;
+    inputTokens = completion.usage?.prompt_tokens ?? null;
+    outputTokens = completion.usage?.completion_tokens ?? null;
 
-    if (response.status === "incomplete") {
+    const choice = completion.choices[0];
+    if (choice?.finish_reason === "length") {
       throw new AppError("AI_OUTPUT_INVALID", "The AI response was cut short. Try a shorter request.");
     }
+    if (choice?.message?.refusal) {
+      throw new AppError("AI_OUTPUT_INVALID", "The AI declined this request. Try rephrasing it.");
+    }
 
-    // 2) Validate again with Zod before anything is stored or displayed.
-    const parsed = def.outputSchema.safeParse(response.output_parsed);
+    // 2) Parse + validate with Zod before anything is stored or displayed.
+    const parsed = def.outputSchema.safeParse(parseJsonContent(choice?.message?.content));
     if (!parsed.success) {
       throw new AppError("AI_OUTPUT_INVALID", "The AI returned an unexpected format. Your credits were not charged.");
     }
@@ -193,6 +203,17 @@ export async function runAIService<I extends z.ZodType, O extends z.ZodType>(
     if (isAppError(error) || error instanceof ConfigurationError) throw error;
     logger.error(`AI service ${def.id} failed`, error);
     throw new AppError("PROVIDER_ERROR", "The AI service is temporarily unavailable. Your credits were not charged.");
+  }
+}
+
+/** Parse model JSON output, tolerating a ```json fence some providers add. Returns undefined if unparseable. */
+export function parseJsonContent(content: string | null | undefined): unknown {
+  if (!content) return undefined;
+  const trimmed = content.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+  try {
+    return JSON.parse(trimmed);
+  } catch {
+    return undefined;
   }
 }
 

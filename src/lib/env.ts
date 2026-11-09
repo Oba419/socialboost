@@ -38,6 +38,11 @@ const serverSchema = z.object({
   OPENAI_MODEL_DEFAULT: z.string().default("gpt-5-mini"),
   OPENAI_MODEL_ADVANCED: z.string().default("gpt-5"),
   OPENAI_MAX_OUTPUT_TOKENS: z.coerce.number().int().positive().default(4000),
+  /** "openai" | "gemini". Defaults to whichever provider has a key (OpenAI first). */
+  AI_PROVIDER: z.enum(["openai", "gemini"]).optional().catch(undefined),
+  GEMINI_API_KEY: optional,
+  GEMINI_MODEL_DEFAULT: z.string().default("gemini-2.5-flash"),
+  GEMINI_MODEL_ADVANCED: z.string().default("gemini-2.5-flash"),
   PAYSTACK_SECRET_KEY: optional,
   TOKEN_ENCRYPTION_KEY: optional,
   OAUTH_STATE_SECRET: optional,
@@ -79,7 +84,22 @@ export const isSupabaseConfigured = () =>
 export const isServiceRoleConfigured = () =>
   isSupabaseConfigured() && Boolean(serverEnv().SUPABASE_SERVICE_ROLE_KEY);
 
-export const isOpenAIConfigured = () => Boolean(serverEnv().OPENAI_API_KEY);
+export type AIProvider = "openai" | "gemini";
+
+/** Which AI provider is active, or null when none is configured. */
+export function activeAIProvider(): AIProvider | null {
+  const env = serverEnv();
+  if (env.AI_PROVIDER === "openai") return env.OPENAI_API_KEY ? "openai" : null;
+  if (env.AI_PROVIDER === "gemini") return env.GEMINI_API_KEY ? "gemini" : null;
+  if (env.OPENAI_API_KEY) return "openai";
+  if (env.GEMINI_API_KEY) return "gemini";
+  return null;
+}
+
+export const isAIConfigured = () => activeAIProvider() !== null;
+
+/** @deprecated name kept for existing callers: true when ANY AI provider is configured. */
+export const isOpenAIConfigured = isAIConfigured;
 
 export const isPaystackConfigured = () =>
   Boolean(serverEnv().PAYSTACK_SECRET_KEY && publicEnv.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY);
