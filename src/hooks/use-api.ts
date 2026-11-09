@@ -23,7 +23,11 @@ export async function apiFetch<T>(url: string, init?: RequestInit & { json?: unk
 
 export function toastError(error: ApiFailure["error"]) {
   if (error.code === "PLAN_REQUIRED" || error.code === "QUOTA_EXCEEDED") {
-    toast.error(error.message, { action: { label: "Upgrade", onClick: () => (window.location.href = "/dashboard/billing") } });
+    toast.error(error.message, {
+      // Toast actions render outside the React tree, so a router instance isn't available here.
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+      action: { label: "Upgrade", onClick: () => (window.location.href = "/dashboard/billing") },
+    });
   } else {
     toast.error(error.message);
   }

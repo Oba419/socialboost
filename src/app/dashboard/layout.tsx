@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { Topbar } from "@/components/layout/topbar";
 import { SetupRequired } from "@/components/shared/setup-required";
@@ -9,6 +10,8 @@ import { createClient } from "@/lib/supabase/server";
 export const metadata = { title: "Dashboard" };
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+  // Always render per request: never prerender authenticated UI at build time.
+  await connection();
   if (!isSupabaseConfigured()) {
     return (
       <div className="mx-auto max-w-xl p-8">

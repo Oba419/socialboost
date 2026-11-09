@@ -18,7 +18,8 @@ export type AIServiceId =
   | "trends"
   | "competitor_analysis"
   | "engagement"
-  | "performance_review";
+  | "performance_review"
+  | "growth_assessment";
 
 export type ModelTier = "default" | "advanced";
 
@@ -44,6 +45,7 @@ export const AI_SERVICES: Record<AIServiceId, AIServiceConfig> = {
   competitor_analysis: { id: "competitor_analysis", label: "Competitor analysis", feature: "competitor_research", credits: 2, tier: "default" },
   engagement: { id: "engagement", label: "Engagement assistant", feature: "engagement_assistant", credits: 1, tier: "default" },
   performance_review: { id: "performance_review", label: "Performance review", feature: "analytics", credits: 3, tier: "advanced" },
+  growth_assessment: { id: "growth_assessment", label: "Growth assessment", feature: "content_ideas", credits: 1, tier: "default" },
 };
 
 export const AI_OPTIONS = {

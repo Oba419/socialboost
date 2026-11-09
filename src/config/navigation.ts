@@ -71,7 +71,7 @@ export const DASHBOARD_NAV: NavGroup[] = [
     label: "Measure",
     items: [
       { title: "Social Accounts", href: "/dashboard/accounts", icon: Share2 },
-      { title: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
+      { title: "Analytics", href: "/dashboard/analytics", icon: BarChart3, feature: "analytics" },
     ],
   },
   {

@@ -8,6 +8,7 @@ import { profileOptimizerService } from "./services/profile-optimizer";
 import { growthCoachService } from "./services/growth-coach";
 import { trendsService } from "./services/trends";
 import { engagementService } from "./services/engagement";
+import { growthAssessmentService } from "./services/growth-assessment";
 
 /**
  * Services callable through the generic POST /api/ai/[service] endpoint.
@@ -25,6 +26,7 @@ export const DIRECT_AI_SERVICES = {
   growth_coach: growthCoachService,
   trends: trendsService,
   engagement: engagementService,
+  growth_assessment: growthAssessmentService,
 } as const;
 
 export type DirectAIServiceId = keyof typeof DIRECT_AI_SERVICES;

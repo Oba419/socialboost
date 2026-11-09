@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Lock, Menu, PanelLeftClose, PanelLeftOpen } from "lucide-react";
@@ -87,28 +87,32 @@ function NavLinks({
   );
 }
 
+// Tiny external store so the persisted preference hydrates without a mismatch.
+const collapseListeners = new Set<() => void>();
+function readCollapsed(): boolean {
+  try {
+    return localStorage.getItem(COLLAPSE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+function writeCollapsed(value: boolean) {
+  try {
+    localStorage.setItem(COLLAPSE_KEY, value ? "1" : "0");
+  } catch {
+    /* storage unavailable: preference just won't persist */
+  }
+  collapseListeners.forEach((l) => l());
+}
+function subscribeCollapsed(listener: () => void) {
+  collapseListeners.add(listener);
+  return () => collapseListeners.delete(listener);
+}
+
 export function DashboardShell({ features, topbar, children, isAdmin }: ShellProps) {
-  const [collapsed, setCollapsed] = useState(false);
+  const collapsed = useSyncExternalStore(subscribeCollapsed, readCollapsed, () => false);
   const [mobileOpen, setMobileOpen] = useState(false);
-
-  useEffect(() => {
-    try {
-      setCollapsed(localStorage.getItem(COLLAPSE_KEY) === "1");
-    } catch {
-      /* storage unavailable */
-    }
-  }, []);
-
-  const toggle = () => {
-    setCollapsed((c) => {
-      try {
-        localStorage.setItem(COLLAPSE_KEY, c ? "0" : "1");
-      } catch {
-        /* ignore */
-      }
-      return !c;
-    });
-  };
+  const toggle = () => writeCollapsed(!collapsed);
 
   return (
     <div className="flex min-h-screen">

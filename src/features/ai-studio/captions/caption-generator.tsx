@@ -1,6 +1,6 @@
 "use client";
 
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Sparkles } from "lucide-react";
@@ -52,8 +52,8 @@ export function CaptionGenerator({ aiReady, defaultPlatform }: { aiReady: boolea
       language: "English",
     },
   });
-  const { register, handleSubmit, control, formState, watch } = form;
-  const platform = watch("platform");
+  const { register, handleSubmit, control, formState } = form;
+  const platform = useWatch({ control, name: "platform" });
   const limit = isPlatformId(platform) ? PLATFORMS[platform].textLimit : null;
 
   const onSubmit = handleSubmit((values) => generate(values));
