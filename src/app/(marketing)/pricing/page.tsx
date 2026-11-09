@@ -24,7 +24,7 @@ export default function PricingPage() {
   const plans = [...DEFAULT_PLANS].sort((a, b) => a.sortOrder - b.sortOrder);
   return (
     <>
-      <div className="bg-hero-glow">
+      <div>
         <Section
           eyebrow="Pricing"
           as="h1"

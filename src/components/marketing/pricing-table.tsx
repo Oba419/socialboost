@@ -25,8 +25,14 @@ export function PricingTable({ compact = false }: { compact?: boolean }) {
 
   return (
     <div>
-      <div className="mb-10 flex justify-center">
-        <div role="radiogroup" aria-label="Billing interval" className="bg-muted inline-flex rounded-full p-1">
+      <div className="mb-12 flex justify-center" data-reveal>
+        <div role="radiogroup" aria-label="Billing interval" className="glass relative inline-flex rounded-full border p-1 shadow-sm">
+          {/* Sliding thumb */}
+          <span
+            aria-hidden
+            className="bg-brand-gradient absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] rounded-full shadow-md shadow-primary/30 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
+            style={{ transform: interval === "annual" ? "translateX(100%)" : "translateX(0)" }}
+          />
           {(["monthly", "annual"] as const).map((v) => (
             <button
               key={v}
@@ -35,39 +41,57 @@ export function PricingTable({ compact = false }: { compact?: boolean }) {
               aria-checked={interval === v}
               onClick={() => setInterval(v)}
               className={cn(
-                "focus-visible:ring-ring rounded-full px-4 py-1.5 text-sm transition-colors outline-none focus-visible:ring-2",
-                interval === v ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+                "focus-visible:ring-ring relative z-10 min-w-36 rounded-full px-5 py-2 text-sm font-medium transition-colors duration-300 outline-none focus-visible:ring-2",
+                interval === v ? "text-white" : "text-muted-foreground hover:text-foreground",
               )}
             >
               {v === "monthly" ? "Monthly" : "Annual"}
-              {v === "annual" && <span className="text-success ml-1.5 text-xs font-medium">2 months free</span>}
+              {v === "annual" && (
+                <span className={cn("ml-1.5 text-xs font-semibold", interval === v ? "text-white/90" : "text-success")}>
+                  2 months free
+                </span>
+              )}
             </button>
           ))}
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+      <div className="grid items-stretch gap-4 md:grid-cols-2 xl:grid-cols-5" data-reveal-stagger>
         {plans.map((plan) => {
           const price = priceLabel(plan, interval);
           return (
             <div
               key={plan.id}
               className={cn(
-                "bg-card relative flex flex-col rounded-2xl border p-6",
-                plan.highlighted && "border-primary shadow-primary/15 shadow-xl ring-1 ring-primary/40",
+                "spotlight relative flex flex-col rounded-3xl border p-6 backdrop-blur-sm",
+                plan.highlighted
+                  ? "gradient-border bg-card border-transparent shadow-2xl shadow-primary/25 xl:-translate-y-3 xl:scale-[1.03] xl:hover:-translate-y-5"
+                  : "bg-card/70",
               )}
             >
               {plan.highlighted && (
-                <Badge className="bg-brand-gradient absolute -top-3 left-6 border-0 text-white">Most popular</Badge>
+                <>
+                  <Badge className="bg-brand-gradient-animated absolute -top-3 left-6 border-0 px-3 text-white shadow-lg shadow-primary/30">
+                    Most popular
+                  </Badge>
+                </>
               )}
               <h3 className="font-semibold">{plan.name}</h3>
               <p className="text-muted-foreground mt-1 min-h-10 text-sm">{plan.description}</p>
               <div className="mt-5">
                 {plan.priceIsStartingFrom && <span className="text-muted-foreground mr-1 text-sm">from</span>}
-                <span className="text-3xl font-semibold tracking-tight tabular-nums">{price.main}</span>
+                <span
+                  key={`${plan.id}-${interval}`}
+                  className={cn(
+                    "page-enter inline-block text-3xl font-semibold tracking-tight tabular-nums",
+                    plan.highlighted && "text-gradient",
+                  )}
+                >
+                  {price.main}
+                </span>
                 <p className="text-muted-foreground mt-1 text-xs">{price.sub}</p>
               </div>
-              <Button asChild className="mt-6" variant={plan.highlighted ? "default" : "outline"}>
+              <Button asChild className="mt-6 rounded-full" variant={plan.highlighted ? "gradient" : "outline"}>
                 <Link href={plan.id === "free" ? "/signup" : `/signup?plan=${plan.id}`}>
                   {plan.id === "free" ? "Start free" : plan.id === "agency" ? "Get started" : `Choose ${plan.name}`}
                 </Link>

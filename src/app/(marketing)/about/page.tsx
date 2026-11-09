@@ -1,6 +1,7 @@
 import { Compass, Heart, ShieldCheck, Sprout } from "lucide-react";
 import { FinalCTASection } from "@/components/marketing/home-sections";
 import { Section } from "@/components/marketing/section";
+import { SpotlightCard } from "@/components/motion/spotlight-card";
 import { siteConfig } from "@/config/site";
 
 export const metadata = {
@@ -18,7 +19,7 @@ const VALUES = [
 export default function AboutPage() {
   return (
     <>
-      <div className="bg-hero-glow">
+      <div>
         <Section
           as="h1"
           eyebrow="About us"
@@ -42,18 +43,18 @@ export default function AboutPage() {
         </div>
       </Section>
 
-      <Section id="values" eyebrow="What we believe" title="Principles we build by" className="bg-muted/30">
-        <div className="grid gap-4 sm:grid-cols-2">
+      <Section id="values" eyebrow="What we believe" title="Principles we build by" revealChildren={false}>
+        <div className="grid gap-4 sm:grid-cols-2" data-reveal-stagger>
           {VALUES.map((v) => (
-            <div key={v.title} className="bg-card flex gap-4 rounded-2xl border p-6">
-              <span className="bg-primary/10 text-primary inline-flex size-10 shrink-0 items-center justify-center rounded-lg">
+            <SpotlightCard key={v.title} className="bg-card/70 flex gap-4 rounded-3xl border p-7 backdrop-blur-sm">
+              <span className="bg-brand-gradient inline-flex size-11 shrink-0 items-center justify-center rounded-xl text-white shadow-lg shadow-primary/25">
                 <v.icon className="size-5" />
               </span>
               <div>
                 <h3 className="font-semibold">{v.title}</h3>
                 <p className="text-muted-foreground mt-1 text-sm leading-relaxed">{v.description}</p>
               </div>
-            </div>
+            </SpotlightCard>
           ))}
         </div>
       </Section>

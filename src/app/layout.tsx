@@ -30,6 +30,14 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+      <head>
+        {/* Arm scroll reveals before first paint (no flash); fail-safe shows everything if JS never runs. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{if(!matchMedia('(prefers-reduced-motion: reduce)').matches){var d=document.documentElement;d.classList.add('reveal-ready');setTimeout(function(){if(!window.__revealBooted){document.querySelectorAll('[data-reveal],[data-reveal-stagger],[data-reveal-bars]').forEach(function(e){e.classList.add('is-visible')})}},4000)}}catch(e){}})();`,
+          }}
+        />
+      </head>
       <body className="min-h-full">
         <Providers>{children}</Providers>
       </body>

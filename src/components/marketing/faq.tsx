@@ -41,16 +41,23 @@ export const DEFAULT_FAQ: FAQItem[] = [
 
 export function FAQ({ items = DEFAULT_FAQ }: { items?: FAQItem[] }) {
   return (
-    <div className="mx-auto max-w-3xl divide-y rounded-2xl border">
+    <div className="mx-auto max-w-3xl space-y-3">
       {items.map((item) => (
-        <Collapsible key={item.q} className="group">
+        <Collapsible
+          key={item.q}
+          className="group bg-card/70 data-[state=open]:border-primary/30 overflow-hidden rounded-2xl border backdrop-blur-sm transition-all duration-500 data-[state=open]:shadow-lg data-[state=open]:shadow-primary/10"
+        >
           <h3>
-            <CollapsibleTrigger className="hover:bg-muted/40 focus-visible:ring-ring flex w-full items-center justify-between gap-4 px-5 py-4 text-left font-medium outline-none focus-visible:ring-2 focus-visible:ring-inset">
+            <CollapsibleTrigger className="hover:bg-muted/30 focus-visible:ring-ring flex w-full items-center justify-between gap-4 px-6 py-5 text-left font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-inset">
               {item.q}
-              <ChevronDown className="text-muted-foreground size-4 shrink-0 transition-transform group-data-[state=open]:rotate-180" aria-hidden />
+              <span className="bg-muted group-data-[state=open]:bg-brand-gradient inline-flex size-7 shrink-0 items-center justify-center rounded-full transition-all duration-500 group-data-[state=open]:text-white">
+                <ChevronDown className="size-4 transition-transform duration-500 group-data-[state=open]:rotate-180" aria-hidden />
+              </span>
             </CollapsibleTrigger>
           </h3>
-          <CollapsibleContent className="text-muted-foreground px-5 pb-5 text-sm leading-relaxed">{item.a}</CollapsibleContent>
+          <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
+            <p className="text-muted-foreground px-6 pb-6 text-sm leading-relaxed">{item.a}</p>
+          </CollapsibleContent>
         </Collapsible>
       ))}
     </div>

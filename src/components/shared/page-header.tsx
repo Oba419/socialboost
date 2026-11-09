@@ -16,14 +16,14 @@ export function PageHeader({
 }) {
   return (
     <div className={cn("flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between", className)}>
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-4">
         {Icon && (
-          <span className="bg-primary/10 text-primary mt-0.5 hidden size-10 shrink-0 items-center justify-center rounded-xl sm:inline-flex">
+          <span className="bg-brand-gradient-animated mt-0.5 hidden size-11 shrink-0 items-center justify-center rounded-2xl text-white shadow-lg shadow-primary/25 sm:inline-flex">
             <Icon className="size-5" />
           </span>
         )}
         <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-[1.7rem]">{title}</h1>
           {description && <p className="text-muted-foreground max-w-2xl text-sm">{description}</p>}
         </div>
       </div>

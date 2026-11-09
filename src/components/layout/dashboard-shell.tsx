@@ -45,14 +45,23 @@ function NavLinks({
         onClick={onNavigate}
         aria-current={active ? "page" : undefined}
         className={cn(
-          "group flex items-center gap-3 rounded-lg px-2.5 py-2 text-sm transition-colors",
+          "group relative flex items-center gap-3 rounded-xl px-2.5 py-2 text-sm transition-all duration-300",
           "text-sidebar-foreground/75 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
           "focus-visible:ring-sidebar-ring outline-none focus-visible:ring-2",
-          active && "bg-sidebar-accent text-sidebar-accent-foreground font-medium",
+          active &&
+            "text-sidebar-accent-foreground bg-[linear-gradient(90deg,color-mix(in_oklch,var(--brand-purple)_16%,transparent),color-mix(in_oklch,var(--brand-blue)_6%,transparent))] font-medium",
           collapsed && "justify-center px-0",
         )}
       >
-        <item.icon className={cn("size-[18px] shrink-0", active ? "text-primary" : "opacity-80")} />
+        {active && (
+          <span aria-hidden className="bg-brand-gradient absolute top-2 bottom-2 left-0 w-[3px] rounded-r-full" />
+        )}
+        <item.icon
+          className={cn(
+            "size-[18px] shrink-0 transition-transform duration-300 group-hover:scale-110",
+            active ? "text-primary" : "opacity-80",
+          )}
+        />
         {!collapsed && <span className="flex-1 truncate">{item.title}</span>}
         {!collapsed && locked && <Lock className="size-3.5 opacity-50" aria-label="Upgrade required" />}
       </Link>
@@ -153,8 +162,10 @@ export function DashboardShell({ features, topbar, children, isAdmin }: ShellPro
         </div>
       </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="bg-background/80 sticky top-0 z-30 flex h-16 items-center gap-2 border-b px-4 backdrop-blur sm:px-6">
+      <div className="relative isolate flex min-w-0 flex-1 flex-col">
+        {/* Soft brand glow behind page content */}
+        <div aria-hidden className="bg-hero-glow pointer-events-none absolute inset-x-0 top-0 -z-10 h-[420px] opacity-60" />
+        <header className="glass sticky top-0 z-30 flex h-16 items-center gap-2 border-b px-4 sm:px-6">
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Open navigation">

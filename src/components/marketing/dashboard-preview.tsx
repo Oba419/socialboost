@@ -1,20 +1,42 @@
-import { CalendarDays, Lightbulb, Sparkles, TrendingUp } from "lucide-react";
+import { CalendarCheck, CalendarDays, CheckCircle2, Lightbulb, Sparkles, Target, TrendingUp } from "lucide-react";
 
 /**
  * Static illustration of the product UI. All figures are clearly marked as
  * sample data — it is a design mock, not real user performance.
  */
-const BARS = [38, 52, 45, 61, 58, 72, 68, 80, 74, 88, 83, 92];
+const BARS = [34, 48, 42, 58, 52, 66, 61, 74, 70, 84, 79, 92];
 
 export function DashboardPreview() {
   return (
-    <figure className="relative mx-auto w-full max-w-5xl">
-      <div className="bg-brand-gradient absolute -inset-px rounded-2xl opacity-40 blur-2xl" aria-hidden />
-      <div className="bg-card relative overflow-hidden rounded-2xl border shadow-2xl shadow-primary/10">
+    <figure className="hero-tilt relative mx-auto w-full max-w-5xl">
+      {/* Glow */}
+      <div className="bg-brand-gradient-animated absolute -inset-4 rounded-[2rem] opacity-30 blur-3xl" aria-hidden />
+
+      {/* Floating chips (illustrative UI states) */}
+      <div
+        aria-hidden
+        className="glass float-slow absolute top-16 -left-6 z-10 hidden items-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium shadow-xl lg:flex"
+      >
+        <CheckCircle2 className="text-success size-4" /> Caption ready
+      </div>
+      <div
+        aria-hidden
+        className="glass float-slower absolute -right-8 bottom-24 z-10 hidden items-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium shadow-xl lg:flex"
+      >
+        <CalendarCheck className="text-brand-blue size-4" /> Post scheduled · Fri 10:00
+      </div>
+      <div
+        aria-hidden
+        className="glass float-slow absolute -top-5 right-20 z-10 hidden items-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium shadow-xl lg:flex"
+      >
+        <Target className="text-brand-pink size-4" /> Growth plan · Day 3
+      </div>
+
+      <div className="gradient-border bg-card/90 relative overflow-hidden rounded-2xl shadow-2xl shadow-primary/20 backdrop-blur">
         <div className="flex items-center gap-2 border-b px-4 py-3">
-          <span className="size-2.5 rounded-full bg-red-400/70" aria-hidden />
-          <span className="size-2.5 rounded-full bg-amber-400/70" aria-hidden />
-          <span className="size-2.5 rounded-full bg-emerald-400/70" aria-hidden />
+          <span className="size-2.5 rounded-full bg-red-400/80" aria-hidden />
+          <span className="size-2.5 rounded-full bg-amber-400/80" aria-hidden />
+          <span className="size-2.5 rounded-full bg-emerald-400/80" aria-hidden />
           <span className="text-muted-foreground ml-3 text-xs">Dashboard overview</span>
           <span className="border-warning/50 text-warning ml-auto rounded-full border px-2 py-0.5 text-[10px] font-medium">
             Sample data · illustration
@@ -22,29 +44,37 @@ export function DashboardPreview() {
         </div>
         <div className="grid gap-4 p-4 sm:p-6 md:grid-cols-[1fr_280px]">
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {["Followers", "Engagement", "Reach", "Posts"].map((label) => (
-                <div key={label} className="rounded-xl border p-3">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4" data-reveal-stagger>
+              {["Followers", "Engagement", "Reach", "Posts"].map((label, i) => (
+                <div key={label} className="bg-background/60 rounded-xl border p-3">
                   <p className="text-muted-foreground text-[11px]">{label}</p>
                   <div className="bg-muted mt-2 h-4 w-16 rounded" aria-hidden />
-                  <div className="bg-success/30 mt-2 h-2 w-10 rounded" aria-hidden />
+                  <div
+                    className="mt-2 h-2 rounded"
+                    style={{ width: `${40 + i * 8}%`, background: `var(--chart-${(i % 5) + 1})`, opacity: 0.55 }}
+                    aria-hidden
+                  />
                 </div>
               ))}
             </div>
-            <div className="rounded-xl border p-4">
+            <div className="bg-background/60 rounded-xl border p-4">
               <div className="mb-4 flex items-center justify-between">
                 <p className="text-sm font-medium">Performance over time</p>
                 <span className="text-muted-foreground text-[11px]">Last 30 days</span>
               </div>
-              <div className="flex h-36 items-end gap-1.5 sm:gap-2" aria-hidden>
+              <div className="flex h-40 items-end gap-1.5 sm:gap-2" aria-hidden data-reveal-bars>
                 {BARS.map((h, i) => (
-                  <div key={i} className="bg-brand-gradient flex-1 rounded-t-md opacity-80" style={{ height: `${h}%` }} />
+                  <div
+                    key={i}
+                    className="flex-1 rounded-t-md bg-gradient-to-t from-[var(--brand-purple)] via-[var(--brand-blue)] to-[var(--brand-cyan)] opacity-85"
+                    style={{ height: `${h}%`, "--i": i } as React.CSSProperties}
+                  />
                 ))}
               </div>
             </div>
           </div>
-          <div className="space-y-3">
-            <div className="rounded-xl border p-4">
+          <div className="space-y-3" data-reveal-stagger>
+            <div className="bg-background/60 rounded-xl border p-4">
               <p className="mb-2 flex items-center gap-2 text-sm font-medium">
                 <Sparkles className="text-primary size-4" /> AI recommendation
               </p>
@@ -55,12 +85,15 @@ export function DashboardPreview() {
               </div>
             </div>
             {[
-              { icon: CalendarDays, label: "Scheduled post" },
-              { icon: Lightbulb, label: "Saved content idea" },
-              { icon: TrendingUp, label: "Growth plan task" },
-            ].map(({ icon: Icon, label }) => (
-              <div key={label} className="flex items-center gap-3 rounded-xl border p-3">
-                <span className="bg-primary/10 text-primary inline-flex size-8 items-center justify-center rounded-lg">
+              { icon: CalendarDays, label: "Scheduled post", tint: "var(--brand-blue)" },
+              { icon: Lightbulb, label: "Saved content idea", tint: "var(--brand-pink)" },
+              { icon: TrendingUp, label: "Growth plan task", tint: "var(--brand-cyan)" },
+            ].map(({ icon: Icon, label, tint }) => (
+              <div key={label} className="bg-background/60 flex items-center gap-3 rounded-xl border p-3">
+                <span
+                  className="inline-flex size-8 items-center justify-center rounded-lg"
+                  style={{ background: `color-mix(in oklch, ${tint} 15%, transparent)`, color: tint }}
+                >
                   <Icon className="size-4" />
                 </span>
                 <div className="flex-1">

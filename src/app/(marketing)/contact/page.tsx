@@ -11,7 +11,7 @@ export const metadata = {
 
 export default function ContactPage() {
   return (
-    <div className="bg-hero-glow">
+    <div>
       <Section
         as="h1"
         eyebrow="Contact"
@@ -19,21 +19,21 @@ export default function ContactPage() {
         description="Questions about plans, integrations or your account? Send us a message."
       >
         <div className="mx-auto grid max-w-5xl gap-6 lg:grid-cols-[1fr_300px]">
-          <Card>
+          <Card className="gradient-border bg-card/80 rounded-3xl border-transparent shadow-2xl shadow-primary/10 backdrop-blur">
             <CardContent className="p-6 sm:p-8">
               <ContactForm />
             </CardContent>
           </Card>
-          <aside className="space-y-4">
-            <div className="bg-card rounded-2xl border p-6">
-              <Mail className="text-primary size-5" />
+          <aside className="space-y-4" data-reveal-stagger>
+            <div className="spotlight glass rounded-3xl border p-6">
+              <span className="bg-brand-gradient inline-flex size-10 items-center justify-center rounded-xl text-white"><Mail className="size-5" /></span>
               <h2 className="mt-3 font-semibold">Email</h2>
               <a href={`mailto:${siteConfig.supportEmail}`} className="text-muted-foreground hover:text-foreground mt-1 block text-sm break-all underline-offset-4 hover:underline">
                 {siteConfig.supportEmail}
               </a>
             </div>
-            <div className="bg-card rounded-2xl border p-6">
-              <MessageCircle className="text-primary size-5" />
+            <div className="spotlight glass rounded-3xl border p-6">
+              <span className="bg-brand-gradient inline-flex size-10 items-center justify-center rounded-xl text-white"><MessageCircle className="size-5" /></span>
               <h2 className="mt-3 font-semibold">Existing customers</h2>
               <p className="text-muted-foreground mt-1 text-sm">
                 Sign in first so we can link your message to your account and help faster.

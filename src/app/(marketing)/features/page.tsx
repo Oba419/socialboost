@@ -28,7 +28,7 @@ function CapIcon({ level }: { level: CapabilityLevel }) {
 export default function FeaturesPage() {
   return (
     <>
-      <div className="bg-hero-glow">
+      <div>
         <Section
           as="h1"
           eyebrow="Features"
@@ -38,27 +38,27 @@ export default function FeaturesPage() {
         >
           <nav aria-label="Feature categories" className="flex flex-wrap justify-center gap-2">
             {FEATURE_GROUPS.map((g) => (
-              <a key={g.id} href={`#${g.id}`} className="bg-card hover:border-primary/40 rounded-full border px-4 py-1.5 text-sm transition-colors">
+              <a key={g.id} href={`#${g.id}`} className="glass hover:border-primary/40 rounded-full border px-4 py-1.5 text-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md hover:shadow-primary/10">
                 {g.title}
               </a>
             ))}
-            <a href="#integrations" className="bg-card hover:border-primary/40 rounded-full border px-4 py-1.5 text-sm transition-colors">
+            <a href="#integrations" className="glass hover:border-primary/40 rounded-full border px-4 py-1.5 text-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md hover:shadow-primary/10">
               Integrations
             </a>
           </nav>
         </Section>
       </div>
 
-      {FEATURE_GROUPS.map((group, i) => (
+      {FEATURE_GROUPS.map((group) => (
         <Section
           key={group.id}
           id={group.id}
           eyebrow={group.title}
           title={group.description}
           centered={false}
-          className={i % 2 === 1 ? "bg-muted/30" : undefined}
+          revealChildren={false}
         >
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-reveal-stagger>
             {group.items.map((f) => (
               <FeatureCard key={f.title} feature={f} />
             ))}
@@ -72,7 +72,7 @@ export default function FeaturesPage() {
         title="What each platform supports"
         description="We only use official APIs. What's possible depends on each platform's permissions, your account type and the platform's approval of our developer app."
       >
-        <div className="overflow-x-auto rounded-2xl border">
+        <div className="bg-card/70 overflow-x-auto rounded-3xl border shadow-xl shadow-primary/5 backdrop-blur-sm">
           <table className="w-full min-w-[760px] text-sm">
             <caption className="sr-only">Platform capability matrix</caption>
             <thead className="bg-muted/50">
