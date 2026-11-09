@@ -29,10 +29,21 @@ export function getAIClient(provider: AIProvider = requireProvider()): OpenAI {
   const env = serverEnv();
   const client =
     provider === "gemini"
-      ? new OpenAI({ apiKey: env.GEMINI_API_KEY, baseURL: GEMINI_BASE_URL, maxRetries: 2, timeout: 120_000 })
+      ? // Fail fast: when Gemini is overloaded we switch to the fallback model instead of waiting.
+        new OpenAI({ apiKey: env.GEMINI_API_KEY, baseURL: GEMINI_BASE_URL, maxRetries: 1, timeout: 60_000 })
       : new OpenAI({ apiKey: env.OPENAI_API_KEY, maxRetries: 2, timeout: 90_000 });
   clients.set(provider, client);
   return client;
+}
+
+/** Model to retry with when the primary is overloaded, or null. */
+export function fallbackModelFor(provider: AIProvider): string | null {
+  return provider === "gemini" ? serverEnv().GEMINI_MODEL_FALLBACK || null : null;
+}
+
+/** True for transient provider errors worth retrying on another model. */
+export function isOverloadError(error: unknown): boolean {
+  return error instanceof OpenAI.APIError && (error.status === 503 || error.status === 429 || error.status === 500);
 }
 
 export function modelFor(tier: ModelTier, provider: AIProvider = requireProvider()): string {

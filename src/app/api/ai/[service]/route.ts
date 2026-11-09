@@ -6,7 +6,7 @@ import { DIRECT_AI_SERVICES, isDirectAIService } from "@/lib/ai/registry";
 import { runAIService } from "@/lib/ai/runner";
 import type { AIServiceDefinition } from "@/lib/ai/types";
 
-export const maxDuration = 120;
+export const maxDuration = 300;
 
 const bodySchema = z.object({
   input: z.unknown(),

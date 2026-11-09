@@ -7,7 +7,7 @@ import { growthPlanService } from "@/lib/ai/services/growth-plan";
 import type { Json } from "@/types/database";
 import { generatePlanSchema, listPlansWithProgress } from "@/features/growth-plans/server";
 
-export const maxDuration = 180;
+export const maxDuration = 300;
 
 /** GET /api/growth-plans — plans in this workspace with completion progress. */
 export const GET = route(async () => {

@@ -12,9 +12,10 @@ import { logger } from "@/lib/logger";
 import type { AuthContext } from "@/lib/auth/session";
 import type { FeatureKey } from "@/config/plans";
 import type { Json } from "@/types/database";
-import { getAIClient, modelFor, requireProvider } from "./client";
+import { fallbackModelFor, getAIClient, isOverloadError, modelFor, requireProvider } from "./client";
 import { buildBrandContext } from "./context";
-import type { AIServiceDefinition } from "./types";
+import type { AIServiceDefinition, BrandContext } from "./types";
+import type { AIProvider } from "@/lib/env";
 import { notify } from "@/services/notifications";
 
 export interface AIRunResult<T> {
@@ -103,40 +104,13 @@ export async function runAIService<I extends z.ZodType, O extends z.ZodType>(
   let inputTokens: number | null = null;
   let outputTokens: number | null = null;
 
+  const stats: UsageStats = { inputTokens: null, outputTokens: null };
+
   try {
     const brand = await buildBrandContext(ctx, { withPerformance: options.withPerformance });
-    const maxTokens = def.maxOutputTokens ?? serverEnv().OPENAI_MAX_OUTPUT_TOKENS;
-    const completion = await getAIClient(provider).chat.completions.create({
-      model,
-      messages: [
-        { role: "system", content: def.systemPrompt },
-        { role: "user", content: def.buildUserPrompt(input, brand) },
-      ],
-      // Strict JSON-schema structured output (supported by OpenAI and Gemini's OpenAI endpoint).
-      response_format: zodResponseFormat(def.outputSchema, `${def.id}_output`),
-      // OpenAI reasoning models require max_completion_tokens; Gemini's compat layer uses max_tokens.
-      ...(provider === "openai"
-        ? { max_completion_tokens: maxTokens, store: false }
-        : { max_tokens: maxTokens }),
-    });
-
-    inputTokens = completion.usage?.prompt_tokens ?? null;
-    outputTokens = completion.usage?.completion_tokens ?? null;
-
-    const choice = completion.choices[0];
-    if (choice?.finish_reason === "length") {
-      throw new AppError("AI_OUTPUT_INVALID", "The AI response was cut short. Try a shorter request.");
-    }
-    if (choice?.message?.refusal) {
-      throw new AppError("AI_OUTPUT_INVALID", "The AI declined this request. Try rephrasing it.");
-    }
-
-    // 2) Parse + validate with Zod before anything is stored or displayed.
-    const parsed = def.outputSchema.safeParse(parseJsonContent(choice?.message?.content));
-    if (!parsed.success) {
-      throw new AppError("AI_OUTPUT_INVALID", "The AI returned an unexpected format. Your credits were not charged.");
-    }
-    const output = parsed.data as z.infer<O>;
+    const output = await generateStructured(def, input, brand, { provider, model, stats });
+    inputTokens = stats.inputTokens;
+    outputTokens = stats.outputTokens;
 
     // 3) Persist.
     let generationId: string | null = null;
@@ -186,6 +160,8 @@ export async function runAIService<I extends z.ZodType, O extends z.ZodType>(
       model,
     };
   } catch (error) {
+    inputTokens = stats.inputTokens;
+    outputTokens = stats.outputTokens;
     // Refund the reservation.
     if (res.usage_id) await admin.from("ai_usage").delete().eq("id", res.usage_id);
     const code = isAppError(error) ? error.code : "PROVIDER_ERROR";
@@ -204,6 +180,79 @@ export async function runAIService<I extends z.ZodType, O extends z.ZodType>(
     logger.error(`AI service ${def.id} failed`, error);
     throw new AppError("PROVIDER_ERROR", "The AI service is temporarily unavailable. Your credits were not charged.");
   }
+}
+
+export interface UsageStats {
+  inputTokens: number | null;
+  outputTokens: number | null;
+}
+
+/**
+ * Calls the configured provider with a service's system prompt and strict
+ * JSON schema, then parses and validates the result with Zod. No billing or
+ * persistence here (see runAIService), which also makes it usable by live
+ * provider tests (tests/live).
+ */
+export async function generateStructured<I extends z.ZodType, O extends z.ZodType>(
+  def: AIServiceDefinition<I, O>,
+  input: z.infer<I>,
+  brand: BrandContext,
+  opts: { provider?: AIProvider; model?: string; stats?: UsageStats } = {},
+): Promise<z.infer<O>> {
+  const provider = opts.provider ?? requireProvider();
+  const model = opts.model ?? modelFor(AI_SERVICES[def.id].tier, provider);
+  const maxTokens = def.maxOutputTokens ?? serverEnv().OPENAI_MAX_OUTPUT_TOKENS;
+
+  const request = (modelId: string) => getAIClient(provider).chat.completions.create({
+    model: modelId,
+    messages: [
+      { role: "system", content: def.systemPrompt },
+      { role: "user", content: def.buildUserPrompt(input, brand) },
+    ],
+    // Strict JSON-schema structured output (supported by OpenAI and Gemini's OpenAI endpoint).
+    response_format: zodResponseFormat(def.outputSchema, `${def.id}_output`),
+    ...(provider === "openai"
+      ? // OpenAI reasoning models require max_completion_tokens.
+        { max_completion_tokens: maxTokens, store: false }
+      : // Gemini counts "thinking" tokens against max_tokens: keep thinking low and add headroom.
+        { max_tokens: maxTokens + 2048, reasoning_effort: "low" as const }),
+  }, {
+    // Long-form outputs (growth plans, repurposing) need more time than short captions.
+    timeout: maxTokens > 6000 ? 240_000 : 60_000,
+    maxRetries: maxTokens > 6000 ? 0 : 1,
+  });
+
+  let completion;
+  try {
+    completion = await request(model);
+  } catch (error) {
+    // Provider overloaded/rate-limited: retry once on the configured fallback model.
+    const fallback = fallbackModelFor(provider);
+    if (!fallback || fallback === model || !isOverloadError(error)) throw error;
+    logger.warn(`AI model ${model} unavailable; retrying with ${fallback}`);
+    completion = await request(fallback);
+  }
+
+  if (opts.stats) {
+    opts.stats.inputTokens = completion.usage?.prompt_tokens ?? null;
+    opts.stats.outputTokens = completion.usage?.completion_tokens ?? null;
+  }
+
+  const choice = completion.choices[0];
+  if (choice?.finish_reason === "length") {
+    throw new AppError("AI_OUTPUT_INVALID", "The AI response was cut short. Try a shorter request.");
+  }
+  if (choice?.message?.refusal) {
+    throw new AppError("AI_OUTPUT_INVALID", "The AI declined this request. Try rephrasing it.");
+  }
+
+  const parsed = def.outputSchema.safeParse(parseJsonContent(choice?.message?.content));
+  if (!parsed.success) {
+    throw new AppError("AI_OUTPUT_INVALID", "The AI returned an unexpected format. Your credits were not charged.", {
+      issues: parsed.error.issues.slice(0, 5).map((i) => `${i.path.join(".")}: ${i.message}`),
+    });
+  }
+  return parsed.data as z.infer<O>;
 }
 
 /** Parse model JSON output, tolerating a ```json fence some providers add. Returns undefined if unparseable. */

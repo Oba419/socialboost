@@ -41,8 +41,10 @@ const serverSchema = z.object({
   /** "openai" | "gemini". Defaults to whichever provider has a key (OpenAI first). */
   AI_PROVIDER: z.enum(["openai", "gemini"]).optional().catch(undefined),
   GEMINI_API_KEY: optional,
-  GEMINI_MODEL_DEFAULT: z.string().default("gemini-2.5-flash"),
-  GEMINI_MODEL_ADVANCED: z.string().default("gemini-2.5-flash"),
+  GEMINI_MODEL_DEFAULT: z.string().default("gemini-3.6-flash"),
+  GEMINI_MODEL_ADVANCED: z.string().default("gemini-3.6-flash"),
+  /** Tried once when the primary model is overloaded (503/429). Empty string disables. */
+  GEMINI_MODEL_FALLBACK: z.string().default("gemini-3.5-flash-lite"),
   PAYSTACK_SECRET_KEY: optional,
   TOKEN_ENCRYPTION_KEY: optional,
   OAUTH_STATE_SECRET: optional,
