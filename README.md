@@ -18,7 +18,7 @@ An AI-powered social media growth and management platform: plan, create, schedul
 | Data & auth | Supabase: Postgres + Row Level Security, Auth (email + Google), Storage |
 | AI | OpenAI Responses API with strict structured outputs (`zodTextFormat`) |
 | Payments | Paystack (provider interface allows adding more) |
-| Jobs | Vercel Cron â†’ `/api/cron/*` (no extra infrastructure) |
+| Jobs | Vercel Cron → `/api/cron/*` (no extra infrastructure) |
 | Tests | Vitest (unit), Playwright (E2E) |
 
 ## Architecture overview
@@ -83,9 +83,9 @@ Apply the migrations in `supabase/migrations/` in filename order:
 
 Then in the Supabase dashboard:
 
-1. **Auth â†’ URL configuration:** set Site URL to your `NEXT_PUBLIC_APP_URL` and add `<APP_URL>/auth/callback` to Redirect URLs.
-2. **Auth â†’ Email templates (optional):** links may point to `<APP_URL>/auth/confirm?token_hash={{ .TokenHash }}&type=...`.
-3. **Auth â†’ Providers â†’ Google (optional):** add your Google OAuth client, then set `NEXT_PUBLIC_GOOGLE_AUTH_ENABLED=true`.
+1. **Auth → URL configuration:** set Site URL to your `NEXT_PUBLIC_APP_URL` and add `<APP_URL>/auth/callback` to Redirect URLs.
+2. **Auth → Email templates (optional):** links may point to `<APP_URL>/auth/confirm?token_hash={{ .TokenHash }}&type=...`.
+3. **Auth → Providers → Google (optional):** add your Google OAuth client, then set `NEXT_PUBLIC_GOOGLE_AUTH_ENABLED=true`.
 
 **Create an administrator** (there is deliberately no UI or signup path for this):
 
@@ -114,8 +114,8 @@ All variables are documented in [.env.example](.env.example). Summary:
 
 ### Paystack
 
-1. Use test keys first (`pk_test_â€¦`, `sk_test_â€¦`).
-2. In Paystack **Settings â†’ API Keys & Webhooks** set the webhook URL to `<APP_URL>/api/webhooks/paystack`.
+1. Use test keys first (`pk_test_…`, `sk_test_…`).
+2. In Paystack **Settings → API Keys & Webhooks** set the webhook URL to `<APP_URL>/api/webhooks/paystack`.
 3. Paid features are granted **only** after server-side verification (`GET /transaction/verify/:reference`) from either the callback or the signed webhook. Fulfilment is idempotent.
 4. Renewals charge the saved reusable authorization through the daily renewal cron. Failed renewals move the subscription to `past_due` with a 3-day grace period and then fall back to Free.
 
@@ -137,15 +137,18 @@ Scopes and endpoints change: each adapter in `src/lib/social/adapters/` lists th
 
 ### Background jobs
 
-`vercel.json` schedules:
+| Path | Recommended | `vercel.json` (Hobby-safe) | Purpose |
+| --- | --- | --- | --- |
+| `/api/cron/publish` | every 5 min | daily 07:00 UTC | Publish due posts (exactly-once claim with `FOR UPDATE SKIP LOCKED`, retries with backoff, never double-posts) and flag manual posts that are due |
+| `/api/cron/sync-metrics` | every 6 hours | daily 03:00 UTC | Pull available metrics from connected accounts |
+| `/api/cron/renew-subscriptions` | daily | daily 06:00 UTC | Renewals (one charge attempt per day), downgrades at period end, expirations |
 
-| Path | Schedule | Purpose |
-| --- | --- | --- |
-| `/api/cron/publish` | every 5 min | Publish due posts (exactly-once claim with `FOR UPDATE SKIP LOCKED`, retries with backoff, never double-posts) and flag manual posts that are due |
-| `/api/cron/sync-metrics` | every 6 hours | Pull available metrics from connected accounts |
-| `/api/cron/renew-subscriptions` | daily 06:00 UTC | Renewals (one charge attempt per day), downgrades at period end, expirations |
+`vercel.json` uses once-a-day schedules because Vercel's Hobby plan rejects deployments with more frequent crons. For timely publishing:
 
-Vercel sends `Authorization: Bearer $CRON_SECRET`. Sub-daily schedules need a Vercel Pro plan. On Hobby, run the same endpoints from any external scheduler with that header.
+- **Vercel Pro:** change the publish schedule in `vercel.json` to `*/5 * * * *` (and sync-metrics to `0 */6 * * *`).
+- **Hobby (free):** create a free job at an external scheduler such as cron-job.org that calls `GET https://<your-domain>/api/cron/publish` every 5 minutes with the header `Authorization: Bearer <CRON_SECRET>`.
+
+All cron endpoints reject requests without that header.
 
 ## Scripts
 
@@ -161,8 +164,8 @@ Vercel sends `Authorization: Bearer $CRON_SECRET`. Sub-daily schedules need a Ve
 
 ## Testing
 
-- **Unit tests** (`tests/unit`, `src/**/*.test.ts`) cover entitlements, billing periods, encryption, webhook signatures, rate limiting, log redaction, AI schema strictness, prompt construction, API error mapping, plan seed â†” config sync and timezone conversion.
-- **E2E tests** (`tests/e2e`) run on desktop and mobile viewports. Public-site and access-control tests always run. The authenticated journey (login â†’ dashboard navigation â†’ AI generation â†’ save â†’ library â†’ calendar) runs when `E2E_EMAIL` and `E2E_PASSWORD` are set for a confirmed, onboarded user in a **non-production** Supabase project. AI steps are skipped when OpenAI isn't configured.
+- **Unit tests** (`tests/unit`, `src/**/*.test.ts`) cover entitlements, billing periods, encryption, webhook signatures, rate limiting, log redaction, AI schema strictness, prompt construction, API error mapping, plan seed ↔ config sync and timezone conversion.
+- **E2E tests** (`tests/e2e`) run on desktop and mobile viewports. Public-site and access-control tests always run. The authenticated journey (login → dashboard navigation → AI generation → save → library → calendar) runs when `E2E_EMAIL` and `E2E_PASSWORD` are set for a confirmed, onboarded user in a **non-production** Supabase project. AI steps are skipped when OpenAI isn't configured.
 
 ```bash
 npx playwright install chromium   # once

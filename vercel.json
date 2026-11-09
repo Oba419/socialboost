@@ -1,8 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "crons": [
-    { "path": "/api/cron/publish", "schedule": "*/5 * * * *" },
-    { "path": "/api/cron/sync-metrics", "schedule": "0 */6 * * *" },
+    { "path": "/api/cron/publish", "schedule": "0 7 * * *" },
+    { "path": "/api/cron/sync-metrics", "schedule": "0 3 * * *" },
     { "path": "/api/cron/renew-subscriptions", "schedule": "0 6 * * *" }
   ]
 }
